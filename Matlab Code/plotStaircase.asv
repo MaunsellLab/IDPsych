@@ -1,0 +1,12 @@
+function plotStaircase(filePath)
+
+  load(filePath, 'file', 'trials');
+  trialStructs = [trials(:).trial];
+  eotCodes = [trials(:).eotCodes];
+  stepCohPC = [trialStructs(:).stepCohPC];
+  correctIn
+
+  figure(1);
+  plot(stepCohPC, 'bo');
+  axis([0, file.numberOfTrials, 0, 100]);
+end

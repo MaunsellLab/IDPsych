@@ -1,6 +1,7 @@
 function checkFile()
 
 load ('/Users/Shared/Data/IDPsych/103/2022-07-19-00.mat', 'file', 'trials');
+% load ('2022-07-22-00.mat', 'file', 'trials');
 eotCodes = [trials(:).eotCode];
 trialStructs = [trials(:).trial];
 side = [trialStructs(:).changeLoc];

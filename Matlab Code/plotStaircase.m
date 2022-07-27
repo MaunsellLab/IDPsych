@@ -1,10 +1,11 @@
 function plotStaircase(filePath)
 
   load(filePath, 'file', 'trials');
+  trialCertify = [trials(:).trialCertify];
+  trials = trials(trialCertify == 0);
   trialStructs = [trials(:).trial];
   eotCodes = [trials(:).eotCode];
   stepCohPC = [trialStructs(:).stepCohPC];
-  stepDir = [trialStructs(:).stepDir];
   correctIndices = find(eotCodes == 0);
   wrongIndices = find(eotCodes == 1);
 

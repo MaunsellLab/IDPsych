@@ -4,9 +4,16 @@
 
 cd D:\Research\IDPsych_Project\IDPsych
 fileList = dir('**\*.mat');
+
+% Pull out data from a range of dates
+% Date put in as a three-element vector: [YYYY, (M)M, (D)D]
 startDate = [2022, 7, 21];
 endDate = [2022, 7, 22];
+
+% Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
+
+% Get the indices of the files to be removed
 toRemove = [];
 for fi = 1:length(fileList)
     name = split(fileList(fi).name, '-');
@@ -19,16 +26,19 @@ for fi = 1:length(fileList)
     end
 end
 fileList(toRemove) = [];
+
+
 nFiles = length(fileList);
 IDPsychTrials = struct;
-
 allStaircase = zeros(nFiles, 100);
 
-% subFolders = unique({fileList(:).folder});
-% for fd = 1:length(subFolders)
-%     addpath(subFolders{fd});
-% end
+% % subFolders = unique({fileList(:).folder});
+% % for fd = 1:length(subFolders)
+% %     addpath(subFolders{fd});
+% % end
 
+
+% Create the master structure for all data from all subjects
 for fi = 1:nFiles
     if ~strcmp(pwd, fileList(fi).folder)
         cd(fileList(fi).folder)
@@ -39,24 +49,42 @@ for fi = 1:nFiles
                                              digitsPattern + textBoundary));
     load(fileList(fi).name);
     IDPsychTrials(fi).nTrials = length(trials);
+
+    % taskMode: task for current session
+    % 0 for Dec and 1 for Inc
     IDPsychTrials(fi).taskMode = trials(1).trial.taskMode;
-    % 1 for Inc and 0 for Dec
+
+    % stairType: 0 for joint staircase
     IDPsychTrials(fi).stairType = trials(1).trial.stairType;
+
     IDPsychTrials(fi).baseCohPC = trials(1).trial.baseCohPC;
     IDPsychTrials(fi).baseDurMS = trials(1).trial.baseDurMS;
     IDPsychTrials(fi).stepDurMS = trials(1).trial.stepDurMS;
     for tr = 1:length(trials)
+
+        % trialCertify: only trials coded as "0" should be collected
         IDPsychTrials(fi).trials(tr).trialCertify = trials(tr).trialCertify;
+
+        % eodCode: 0 for hit, 1 for miss, 3 for
         IDPsychTrials(fi).trials(tr).eodCode = trials(tr).eotCode;
+
+        % stepDir: task for current trial (should be the same through out
+        % the session if it is not bidirectional)
+        % 0 for Dec and 1 for Inc
         IDPsychTrials(fi).trials(tr).stepDir = trials(tr).trial.stepDir;
+
+        % changeLoc: specifies on which side the change happens
+        % 0 for Left and 1 for Right
         IDPsychTrials(fi).trials(tr).changeLoc = trials(tr).trial.changeLoc;
+
+
         IDPsychTrials(fi).trials(tr).stepSize = trials(tr).trial.threshStepsPC;
         IDPsychTrials(fi).trials(tr).trialCohPC = trials(tr).trial.stepCohPC;
     end
     
     testCertify = ([IDPsychTrials(fi).trials(:).trialCertify] == 0) .* ...
                   (([IDPsychTrials(fi).trials(:).eodCode] == 0) + ([IDPsychTrials(fi).trials(:).eodCode] == 1));
-    % test if a trial is certified: trialCertify should be 0, and the
+    % test if a trial is certified: trialCertify should be 0, and the 
     % eodCode should be either 0 or 1
     allStaircase(fi,:) = [IDPsychTrials(fi).trials(testCertify == 1).trialCohPC];
 
@@ -124,9 +152,9 @@ legend(cellstr(categorical(sjID)));
 
 
 % Plot the average staircases
-
-IncStaircase = allStaircase([IDPsychTrials(:).taskMode] == 1, :);
-DecStaircase = allStaircase([IDPsychTrials(:).taskMode] == 0, :);
+% for subject 101 only - 072722
+IncStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 1, :);
+DecStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 0, :);
 IncStaircaseMean = mean(IncStaircase);
 IncStaircaseSEM = std(IncStaircase) / sqrt(size(IncStaircase, 1));
 DecStaircaseMean = mean(DecStaircase);
@@ -150,8 +178,12 @@ patch([1:100, fliplr(1:100)], ...
 hold on
 plot([0 100], [50 50], ':k');
 axis([0 100 0 100]);
-text(70,85, ["Inc Threshold: ", num2str(IncStaircaseMean(100)), char(177), ...
-             num2str()])
+text(70,85, ["Inc Threshold: ", [num2str(IncStaircaseMean(100) - 50, 3), '% ' char(177), ...
+             ' ', num2str(IncStaircaseSEM(100),2), '%'], ...
+             ['n = ', num2str(size(IncStaircase, 1))]]);
+text(70,40, ["Dec Threshold: ", [num2str(50 - DecStaircaseMean(100), 3), '% ' char(177), ...
+             ' ', num2str(DecStaircaseSEM(100),2), '%'], ...
+             ['n = ', num2str(size(DecStaircase, 1))]]);
 xlabel('Trial Number');
 ylabel('Coherence (%)');
-title('Averaged Inc/Dec Staircases');
+title('Averaged Inc/Dec Staircases (Subject 101)');

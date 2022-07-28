@@ -4,7 +4,8 @@ function convertIDP(forceConversion)
   if nargin < 1
     forceConversion = false;
   end
-  dataFolder = '/Users/Shared/Data/IDPsych/';
+%   dataFolder = '/Users/Shared/Data/IDPsych/';
+  dataFolder = 'D:\Research\IDPsych_Project\IDPsych';       % for Lai's Desktop only
   if ~isfolder(dataFolder)
     return;
   end
@@ -13,7 +14,13 @@ function convertIDP(forceConversion)
   for f = 1:length(fileList)
     digitIndex = regexp(fileList(f).name, '[0-9]+');        % only folders with names that are all numerals
     if length(digitIndex) == 1 && digitIndex == 1
-      doOneFolder(strcat(dataFolder, fileList(f).name, '/'), forceConversion);
+%       doOneFolder(strcat(dataFolder, fileList(f).name, '/'), forceConversion);
+
+
+      doOneFolder(strcat(dataFolder, '\', fileList(f).name), forceConversion);    % for Lai's Desktop only
+
+
+      
     end
   end
   fprintf('All ''.dat'' files have been converted to ''.mat''\n');
@@ -23,7 +30,7 @@ function doOneFolder(subjectFolder, forceConversion)
   fileList = dir(subjectFolder);
   fileList = fileList(~[fileList.isdir]);                    % only examine files
   for f = 1:length(fileList)
-    [~, fileName, fileExt] = fileparts(fileList(f).name);
+      [~, fileName, fileExt] = fileparts(fileList(f).name);
     if strcmp(fileExt, '.dat') && (~exist(strcat(subjectFolder, fileName, '.mat'), 'file') || forceConversion)
       doOneFile(strcat(subjectFolder, fileName))
     end

@@ -1,13 +1,15 @@
 function plotStaircase(filePath)
 
-  load(filePath, 'file', 'trials');
-  trialCertify = [trials(:).trialCertify];
-  trials = trials(trialCertify == 0);
-  trialStructs = [trials(:).trial];
-  eotCodes = [trials(:).eotCode];
-  stepCohPC = [trialStructs(:).stepCohPC];
-  correctIndices = find(eotCodes == 0);
-  wrongIndices = find(eotCodes == 1);
+  load(filePath, 'file', 'trials');                 % load data file
+  trialCertify = [trials(:).trialCertify];          % extract trial certificates
+  eotCodes = [trials(:).eotCode];                   % extract EOT codes
+  validIndices = trialCertify == 0 & eotCodes <= 1; % get indices for valid trials
+  trials = trials(validIndices);                    % remove invalid trials from trial
+  eotCodes = eotCodes(validIndices);                % remove invalid trials from eotCodes
+  trialStructs = [trials(:).trial];                 % extract trial descriptors 
+  stepCohPC = [trialStructs(:).stepCohPC];          % extract coherence steps
+  correctIndices = find(eotCodes == 0);             % get indices for correct trials
+  wrongIndices = find(eotCodes == 1);               % get indices for wrong trialsw
 
   figure(1);
   clf;

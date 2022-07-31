@@ -2,13 +2,14 @@
 % Lai Wei
 % Jul/25/2022
 
+% convertIDP();
 cd D:\Research\IDPsych_Project\IDPsych
 fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
 % Date put in as a three-element vector: [YYYY, (M)M, (D)D]
 startDate = [2022, 7, 21];
-endDate = [2022, 7, 22];
+endDate = [2022, 7, 27];
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
@@ -132,58 +133,88 @@ ylabel('Average Threshold');
 legend(["Mean", cellstr(categorical(sjID))]);
 title('IDPsych');
 
-% Grouped scatter plot against the diagonal line
-figure(2);
-clf;
+% % Grouped scatter plot against the diagonal line
+% figure(2);
+% clf;
+% for sj = 1:length(sjID)
+%     currsjInc = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+%                      ([IDPsychTrials(:).taskMode] == 1));
+%     currsjDec = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+%                      ([IDPsychTrials(:).taskMode] == 0));
+%     scatter(allThresholds(currsjInc),allThresholds(currsjDec), 'filled');
+%     alpha(.5);
+%     hold on
+% end
+% plot([0 50], [0 50], ':k');
+% axis([0 50 0 50]);
+% xlabel('Increment Thresholds');
+% ylabel('Decrement Thresholds');
+% legend(cellstr(categorical(sjID)));
+
+
+% % Plot the average staircases
+% % for subject 101 only - 072722
+% IncStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 1, :);
+% DecStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 0, :);
+% IncStaircaseMean = mean(IncStaircase);
+% IncStaircaseSEM = std(IncStaircase) / sqrt(size(IncStaircase, 1));
+% DecStaircaseMean = mean(DecStaircase);
+% DecStaircaseSEM = std(DecStaircase) / sqrt(size(DecStaircase, 1));
+% 
+% figure(3);
+% clf;
+% plot(1:100, IncStaircaseMean, '-', 'Color', '#77AC30');
+% hold on
+% patch([1:100, fliplr(1:100)], ...
+%       [IncStaircaseMean + IncStaircaseSEM, fliplr(IncStaircaseMean - IncStaircaseSEM)], ...
+%       [0.4660 0.6740 0.1880], ...
+%       'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% hold on
+% plot(1:100, DecStaircaseMean, '-', 'Color', '#D95319');
+% hold on
+% patch([1:100, fliplr(1:100)], ...
+%       [DecStaircaseMean + DecStaircaseSEM, fliplr(DecStaircaseMean - DecStaircaseSEM)], ...
+%       [0.8500 0.3250 0.0980], ...
+%       'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% hold on
+% plot([0 100], [50 50], ':k');
+% axis([0 100 0 100]);
+% text(70,85, ["Inc Threshold: ", [num2str(IncStaircaseMean(100) - 50, 3), '% ' char(177), ...
+%              ' ', num2str(IncStaircaseSEM(100),2), '%'], ...
+%              ['n = ', num2str(size(IncStaircase, 1))]]);
+% text(70,40, ["Dec Threshold: ", [num2str(50 - DecStaircaseMean(100), 3), '% ' char(177), ...
+%              ' ', num2str(DecStaircaseSEM(100),2), '%'], ...
+%              ['n = ', num2str(size(DecStaircase, 1))]]);
+% xlabel('Trial Number');
+% ylabel('Coherence (%)');
+% title('Averaged Inc/Dec Staircases (Subject 101)');
+
+
+% Histograms for each subject
+figure(4)
 for sj = 1:length(sjID)
-    currsjInc = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
-                     ([IDPsychTrials(:).taskMode] == 1));
-    currsjDec = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
-                     ([IDPsychTrials(:).taskMode] == 0));
-    scatter(allThresholds(currsjInc),allThresholds(currsjDec), 'filled');
-    alpha(.5);
+    subplot(3,1,sj);
+%     btstrap = zeros(1000,2);
+%     currsjInc = allThresholds(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+%         ([IDPsychTrials(:).taskMode] == 1) == 1);
+%     currsjDec = allThresholds(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+%         ([IDPsychTrials(:).taskMode] == 0) == 1);
+%     btstrap(:, 1) = currsjInc(randi(length(currsjInc), 1000, 1));
+%     btstrap(:, 2) = currsjDec(randi(length(currsjDec), 1000, 1));
+%     histogram(btstrap(:, 1), 10);
+%     hold on
+%     histogram(btstrap(:, 2), 10);
+    histogram(allThresholds(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+        ([IDPsychTrials(:).taskMode] == 1) == 1)); % Inc
     hold on
+    histogram(allThresholds(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+        ([IDPsychTrials(:).taskMode] == 0) == 1)); % Dec
+    title(['Subject ', num2str(sjID(sj))]);
 end
-plot([0 50], [0 50], ':k');
-axis([0 50 0 50]);
-xlabel('Increment Thresholds');
-ylabel('Decrement Thresholds');
-legend(cellstr(categorical(sjID)));
-
-
-% Plot the average staircases
-% for subject 101 only - 072722
-IncStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 1, :);
-DecStaircase = allStaircase([IDPsychTrials(1:20).taskMode] == 0, :);
-IncStaircaseMean = mean(IncStaircase);
-IncStaircaseSEM = std(IncStaircase) / sqrt(size(IncStaircase, 1));
-DecStaircaseMean = mean(DecStaircase);
-DecStaircaseSEM = std(DecStaircase) / sqrt(size(DecStaircase, 1));
-
-figure(3);
-clf;
-plot(1:100, IncStaircaseMean, '-', 'Color', '#77AC30');
-hold on
-patch([1:100, fliplr(1:100)], ...
-      [IncStaircaseMean + IncStaircaseSEM, fliplr(IncStaircaseMean - IncStaircaseSEM)], ...
-      [0.4660 0.6740 0.1880], ...
-      'FaceAlpha', 0.3, 'EdgeColor', 'none');
-hold on
-plot(1:100, DecStaircaseMean, '-', 'Color', '#D95319');
-hold on
-patch([1:100, fliplr(1:100)], ...
-      [DecStaircaseMean + DecStaircaseSEM, fliplr(DecStaircaseMean - DecStaircaseSEM)], ...
-      [0.8500 0.3250 0.0980], ...
-      'FaceAlpha', 0.3, 'EdgeColor', 'none');
-hold on
-plot([0 100], [50 50], ':k');
-axis([0 100 0 100]);
-text(70,85, ["Inc Threshold: ", [num2str(IncStaircaseMean(100) - 50, 3), '% ' char(177), ...
-             ' ', num2str(IncStaircaseSEM(100),2), '%'], ...
-             ['n = ', num2str(size(IncStaircase, 1))]]);
-text(70,40, ["Dec Threshold: ", [num2str(50 - DecStaircaseMean(100), 3), '% ' char(177), ...
-             ' ', num2str(DecStaircaseSEM(100),2), '%'], ...
-             ['n = ', num2str(size(DecStaircase, 1))]]);
-xlabel('Trial Number');
-ylabel('Coherence (%)');
-title('Averaged Inc/Dec Staircases (Subject 101)');
+ax = axes(figure(4), "Visible", "off");
+ax.Title.Visible = "on";
+ax.XLabel.Visible = "on";
+ax.YLabel.Visible = "on";
+xlabel(ax, "Thresholds");
+ylabel(ax, "Count");
+sgtitle("Histograms for IDP Thresholds");

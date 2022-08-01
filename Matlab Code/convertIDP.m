@@ -4,9 +4,15 @@ function convertIDP(forceConversion)
   if nargin < 1
     forceConversion = false;
   end
-%   dataFolder = '/Users/Shared/Data/IDPsych/';
-  dataFolder = 'D:\Research\IDPsych_Project\IDPsych';       % for Lai's Desktop only
+  % For now, assume that the only PC user is Lai.  We can expand this as
+  % needed if others are using PCs
+  if ismac
+    dataFolder = '/Users/Shared/Data/IDPsych/';
+  else
+    dataFolder = 'D:\Research\IDPsych_Project\IDPsych\';       % for Lai's Desktop only
+  end
   if ~isfolder(dataFolder)
+    fprintf('Cannot find %s\n', dataFolder);
     return;
   end
   fileList = dir(dataFolder);
@@ -14,36 +20,34 @@ function convertIDP(forceConversion)
   for f = 1:length(fileList)
     digitIndex = regexp(fileList(f).name, '[0-9]+');        % only folders with names that are all numerals
     if length(digitIndex) == 1 && digitIndex == 1
-%       doOneFolder(strcat(dataFolder, fileList(f).name, '/'), forceConversion);
-
-
-      doOneFolder(strcat(dataFolder, '\', fileList(f).name), forceConversion);    % for Lai's Desktop only
-
-
-      
+      folderPath = strcat(dataFolder, fileList(f).name, filesep);
+      if forceConversion
+        delete(strcat(folderPath, '*.mat'));
+      end
+      doOneFolder(folderPath);
     end
   end
   fprintf('All ''.dat'' files have been converted to ''.mat''\n');
 end
 
-function doOneFolder(subjectFolder, forceConversion)
+function doOneFolder(subjectFolder)
   fileList = dir(subjectFolder);
   fileList = fileList(~[fileList.isdir]);                    % only examine files
   for f = 1:length(fileList)
-      [~, fileName, fileExt] = fileparts(fileList(f).name);
-    if strcmp(fileExt, '.dat') && (~exist(strcat(subjectFolder, fileName, '.mat'), 'file') || forceConversion)
+    [~, fileName, fileExt] = fileparts(fileList(f).name);
+    if strcmp(fileExt, '.dat') && (~exist(strcat(subjectFolder, fileName, '.mat'), 'file'))
       doOneFile(strcat(subjectFolder, fileName))
     end
   end
 end
 
 function doOneFile(filePath)
-  datPath = strcat(filePath, '.dat');
-  file = readLLFile('i', datPath);
+  dataPath = strcat(filePath, '.dat');
+  file = readLLFile('i', dataPath);
   file.subjectNumber = file.subjectNumber(1).data;
   numTrials = file.numberOfTrials;
   for dataTypes = {'trialStart', 'trialEnd', 'trialCertify', 'eotCode', 'fixOn', 'fixate', ...
-            'subjectNumber', 'trial'}
+            'subjectNumber', 'randomDots', 'trial'}
     dataT = dataTypes{:};
     trials.(dataT) = nan(numTrials, 1);
   end
@@ -66,6 +70,9 @@ function doOneFile(filePath)
     end
     if isfield(trial, 'trialCertify')
       trials(tIndex).trialCertify = trial.trialCertify.data;
+    end    
+    if isfield(trial, 'randomDots')
+      trials(tIndex).randomDots = trial.randomDots.data;
     end    
   end
   delete(hWait)

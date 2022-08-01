@@ -17,6 +17,7 @@ function convertIDP(forceConversion)
   end
   fileList = dir(dataFolder);
   fileList = fileList([fileList.isdir]);                    % only examine folders
+  hWait = waitbar(0, '', 'Name', 'convertIDP');
   for f = 1:length(fileList)
     digitIndex = regexp(fileList(f).name, '[0-9]+');        % only folders with names that are all numerals
     if length(digitIndex) == 1 && digitIndex == 1
@@ -24,24 +25,25 @@ function convertIDP(forceConversion)
       if forceConversion
         delete(strcat(folderPath, '*.mat'));
       end
-      doOneFolder(folderPath);
+      doOneFolder(folderPath, hWait);
     end
   end
+  delete(hWait)
   fprintf('All ''.dat'' files have been converted to ''.mat''\n');
 end
 
-function doOneFolder(subjectFolder)
+function doOneFolder(subjectFolder, hWait)
   fileList = dir(subjectFolder);
   fileList = fileList(~[fileList.isdir]);                    % only examine files
   for f = 1:length(fileList)
     [~, fileName, fileExt] = fileparts(fileList(f).name);
     if strcmp(fileExt, '.dat') && (~exist(strcat(subjectFolder, fileName, '.mat'), 'file'))
-      doOneFile(strcat(subjectFolder, fileName))
+      doOneFile(strcat(subjectFolder, fileName), hWait)
     end
   end
 end
 
-function doOneFile(filePath)
+function doOneFile(filePath, hWait)
   dataPath = strcat(filePath, '.dat');
   file = readLLFile('i', dataPath);
   file.subjectNumber = file.subjectNumber(1).data;
@@ -51,7 +53,6 @@ function doOneFile(filePath)
     dataT = dataTypes{:};
     trials.(dataT) = nan(numTrials, 1);
   end
-  hWait = waitbar(0, '', 'name', sprintf('Converting %s', filePath((find(filePath == '/', 1, 'last') + 1):end)));
   for tIndex = numTrials:-1:1
     waitbar((numTrials - tIndex) / numTrials, hWait, sprintf('Loading trial %d of %d', numTrials - tIndex, numTrials));
     trial = readLLFile('t', tIndex);
@@ -75,6 +76,5 @@ function doOneFile(filePath)
       trials(tIndex).randomDots = trial.randomDots.data;
     end    
   end
-  delete(hWait)
   save(strcat(filePath, '.mat'), 'file', 'trials');
 end

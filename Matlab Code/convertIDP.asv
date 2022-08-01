@@ -4,7 +4,8 @@ function convertIDP(forceConversion)
   if nargin < 1
     forceConversion = false;
   end
-  % For now, assume that the on
+  % For now, assume that the only PC user is Lai.  We can expand this as
+  % needed if others are using PCs
   if ismac
     dataFolder = '/Users/Shared/Data/IDPsych/';
   else
@@ -50,7 +51,6 @@ function doOneFile(filePath)
     dataT = dataTypes{:};
     trials.(dataT) = nan(numTrials, 1);
   end
-  hWait = waitbar(0, '', 'name', sprintf('Converting %s', filePath((find(filePath == '/', 1, 'last') + 1):end)));
   for tIndex = numTrials:-1:1
     waitbar((numTrials - tIndex) / numTrials, hWait, sprintf('Loading trial %d of %d', numTrials - tIndex, numTrials));
     trial = readLLFile('t', tIndex);

@@ -83,14 +83,12 @@ for fi = 1:nFiles
     IDPsychTrials(fi).dotSettings.speedDPS = trials(1).randomDots.speedDPS;
     IDPsychTrials(fi).dotSettings.lifeFrames = trials(1).randomDots.lifeFrames;
 
-
     for tr = 1:length(trials)
-
         % trialCertify: only trials coded as "0" should be collected
         IDPsychTrials(fi).trials(tr).trialCertify = trials(tr).trialCertify;
 
         % eodCode: 0 for hit, 1 for miss, 3 for
-        IDPsychTrials(fi).trials(tr).eodCode = trials(tr).eotCode;
+        IDPsychTrials(fi).trials(tr).eotCode = trials(tr).eotCode;
 
         % stepDir: task for current trial (should be the same through out
         % the session if it is not bidirectional)
@@ -107,13 +105,25 @@ for fi = 1:nFiles
     end
     
     testCertify = ([IDPsychTrials(fi).trials(:).trialCertify] == 0) .* ...
-                  (([IDPsychTrials(fi).trials(:).eodCode] == 0) + ([IDPsychTrials(fi).trials(:).eodCode] == 1));
+                  (([IDPsychTrials(fi).trials(:).eotCode] == 0) + ([IDPsychTrials(fi).trials(:).eotCode] == 1));
     % test if a trial is certified: trialCertify should be 0, and the
     % eodCode should be either 0 or 1
     allStaircase(fi,:) = [IDPsychTrials(fi).trials(testCertify == 1).trialCohPC];
 
-    IDPsychTrials(fi).thresholdPC = abs(trials(length(trials)).trial.stepCohPC - trials(1).trial.baseCohPC);
+    IDPsychTrials(fi).thresholdPC = abs(trials(end).trial.stepCohPC - trials(1).trial.baseCohPC);
+
+    % add bias
+    trialStruct = [trials(:).trial];
+    IDPsychTrials(fi).rightChangesPC = sum([trialStruct(:).changeLoc]) ./ length([trialStruct(:).changeLoc]) * 100;
+    IDPsychTrials(fi).rightResponsePC = (sum([trialStruct(:).changeLoc] == 1 & [trials(:).eotCode] == 0) + ...
+                                        sum([trialStruct(:).changeLoc] == 0 & [trials(:).eotCode] == 1)) / ...
+                                        length([trialStruct(:).changeLoc]) * 100;
+    IDPsychTrials(fi).rightBiasPC = IDPsychTrials(fi).rightResponsePC - IDPsychTrials(fi).rightChangesPC;
     
+
+    
+    
+
 end
 
 
@@ -171,23 +181,38 @@ ylabel('Average Threshold');
 legend(["Mean", cellstr(categorical(sjID))]);
 title('IDPsych');
 
-% % Grouped scatter plot against the diagonal line
-% figure(2);
-% clf;
-% for sj = 1:length(sjID)
-%     currsjInc = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
-%                      ([IDPsychTrials(:).taskMode] == 1));
-%     currsjDec = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
-%                      ([IDPsychTrials(:).taskMode] == 0));
-%     scatter(allThresholds(currsjInc),allThresholds(currsjDec), 'filled');
-%     alpha(.5);
-%     hold on
-% end
-% plot([0 50], [0 50], ':k');
-% axis([0 50 0 50]);
-% xlabel('Increment Thresholds');
-% ylabel('Decrement Thresholds');
-% legend(cellstr(categorical(sjID)));
+% Scatter plot against the diagonal line
+figure(2);
+clf;
+for sj = 1:length(sjID)
+    currsjInc = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+                     ([IDPsychTrials(:).taskMode] == 1));
+    currsjDec = find(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+                     ([IDPsychTrials(:).taskMode] == 0));
+    currIncMean = mean(allThresholds(currsjInc));
+    currIncSEM = std(allThresholds(currsjInc)) / sqrt(length(currsjInc));
+    currDecMean = mean(allThresholds(currsjDec));
+    currDecSEM = std(allThresholds(currsjDec)) / sqrt(length(currsjDec));
+    
+    
+    scatter(currIncMean, currDecMean, 100, 'filled');
+
+    hold on
+    % 2*SEM for ~95% confidence interval
+    er = errorbar(currIncMean, currDecMean, 2*currDecSEM, 2*currDecSEM, 2*currIncSEM, ...
+                  2*currIncSEM);
+    
+    er.LineStyle = ':';
+    er.Color = 'k';
+    er.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    
+end
+plot([0 50], [0 50], ':k');
+axis([0 50 0 50]);
+legend(cellstr(categorical(sjID)));
+xlabel('Increment Thresholds (%)');
+ylabel('Decrement Thresholds (%)' );
+
 
 
 % Plot the average staircases

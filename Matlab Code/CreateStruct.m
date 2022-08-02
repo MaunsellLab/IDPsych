@@ -2,14 +2,14 @@
 % Lai Wei
 % Jul/25/2022
 
-% convertIDP();
+convertIDP();
 cd D:\Research\IDPsych_Project\IDPsych
 fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
-% Date put in as a three-element vector: [YYYY, (M)M, (D)D]
-startDate = [2022, 7, 21];
-endDate = [2022, 7, 27];
+% Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
+startDate = datetime(2022, 7, 21);
+endDate = datetime(2022, 8, 2);
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
@@ -23,11 +23,8 @@ for fi = 1:length(fileList)
     % saving the file
     fileList(fi).date = string(join(name(1:3), '-'));
 
-    if str2double(name{1}) < startDate(1) || str2double(name{1}) > endDate(1)
-        toRemove = [toRemove, fi];
-    elseif str2double(name{2}) < startDate(2) || str2double(name{2}) > endDate(2)
-        toRemove = [toRemove, fi];
-    elseif str2double(name{3}) < startDate(3) || str2double(name{3}) > endDate(3)
+    if ~isbetween(datetime(str2double(name{1}), str2double(name{2}), str2double(name{3})), ...
+                  startDate, endDate)
         toRemove = [toRemove, fi];
     end
 end
@@ -310,6 +307,6 @@ ax = axes(figure(5), "Visible", "off");
 ax.Title.Visible = "on";
 ax.XLabel.Visible = "on";
 ax.YLabel.Visible = "on";
-xlabel(ax, 'Day of Experiment');
+xlabel(ax, 'Session No.');
 ylabel(ax, 'Threshold (%)');
 

@@ -21,10 +21,18 @@ end
 
 function plotOneResp(plotIndex, sigmaDeg)
 
+  % Plot responses to preferred and null drift as a function of motion
+  % coherence.
   sigmaRad = deg2rad(sigmaDeg);
+  % the response to 0% coherence motion, assuming perfect normalization of
+  % motion direction.  This is taken as the average response within from
+  % -pi to pi, as a fraction of the peak response.  The first term
+  % normalizes to the maximum possible area under the curve. 
   r0 = (sigmaRad / sqrt(8 * pi)) * (erf(pi / (sqrt(2) * sigmaRad)) - erf(-pi / (sqrt(2) * sigmaRad)));
   coh = (0:0.01:1);
+  % response to 100% motion coherent null direction
   rN100 = (1 / sqrt(2 * pi) / sigmaRad) * exp(-(pi / sigmaRad)^2 / (2 * sigmaRad^2));
+  % responses to preferred and null motion as a function of coherence.
   rPref = coh + (1 - coh) * r0;
   rNull = r0 - coh * (r0 - rN100);
   subplot(4, 2, plotIndex);
@@ -52,9 +60,15 @@ function plotOneResp(plotIndex, sigmaDeg)
 end
 
 function plotOneSigma(plotIndex, sigmaDeg)
-
+  % Plot direction tuning curve with width sigmaDeg and the show the predicted response to 0% coherence
+  % motion. 
   sigmaRad = deg2rad(sigmaDeg);
+  % the area underneath a normalized Gaussian from -pi to pi
   areaComputed = 0.5 * (erf(pi / (sqrt(2) * sigmaRad)) - erf(-pi / (sqrt(2) * sigmaRad)));
+  % the response to 0% coherence motion, assuming perfect normalization of
+  % motion direction.  This is taken as the average response within from
+  % -pi to pi, as a fraction of the peak response.  The first term
+  % normalizes to the maximum possible area under the curve. 
   r0 = (sigmaRad / sqrt(8 * pi)) * (erf(pi / (sqrt(2) * sigmaRad)) - erf(-pi / (sqrt(2) * sigmaRad)));
   subplot(4, 2, plotIndex);
   x = deg2rad(-180:180);
@@ -85,11 +99,17 @@ function plotOneSigma(plotIndex, sigmaDeg)
 end
 
 function plotSigmaFunction()
-
+  % Plot a function showing how the ratio of Pref to Null response varies
+  % as a function of tuning width (sigma).  Response are linear with motion
+  % coherence, so the answer is independent of motion coherence. 
   sigmaDeg = 30:90;
   sigmaRad = deg2rad(sigmaDeg);
+  % get the response to 0% coherence
   r0 = (sigmaRad / sqrt(8 * pi)) .* (erf(pi ./ (sqrt(2) * sigmaRad)) - erf(-pi ./ (sqrt(2) * sigmaRad)));
+  % get the response to 100% null motion (100% preferred motion is taken to
+  % be 1.0)
   rN100 = (1 / sqrt(2 * pi) ./ sigmaRad) .* exp(-(pi ./ sigmaRad).^2 ./ (2 * sigmaRad.^2));
+  % The ratio takes into account that rN100 is never truly zero.
   ratio = (1 - r0) ./ (r0 - rN100);
   ax = subplot(2, 1, 2);
   plot(sigmaDeg, ratio, 'b');

@@ -10,7 +10,7 @@ function plotZeroResp()
 
   figure(2);
   clf;
-  sigmaDeg = [30, 45, 60, 90];
+  sigmaDeg = [36, 45, 60, 90];
   for s = 1:length(sigmaDeg)
     plotOneResp(s, sigmaDeg(s));
   end

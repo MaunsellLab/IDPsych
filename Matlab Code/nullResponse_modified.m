@@ -23,10 +23,9 @@ for b = 1:length(zeroline)
   legends{b} = sprintf('b = %.2f Rmax', zeroline(b));
   for s = stepDeg:stepDeg:limitDeg
     sigmaRad = deg2rad(s);
-    areas(s/stepDeg, b) = sigmaRad / sqrt(2 * pi) * ((normcdf(pi / sigmaRad) - ...
-											normcdf(-pi / sigmaRad)) + zeroline(b));
-    areas(s/stepDeg, b) = areas(s/stepDeg, b) / (1.0 + ...
-											sigmaRad * zeroline(b) / sqrt(2 * pi));
+    areas(s/stepDeg, b) = sigmaRad * (1 - zeroline(b)) / sqrt(2 * pi) * ...
+						  (normcdf(pi / sigmaRad) - normcdf(-pi / sigmaRad)) + ...
+				          zeroline(b);
   end
 end
 xTickLabels = cell(1, limitDeg / stepDeg / 2);
@@ -55,7 +54,9 @@ sigmaRad = deg2rad(sigmaDeg);
 % R0 = sigmaRad / sqrt(2 * pi) * (normcdf(pi / sigmaRad) - normcdf(-pi / sigmaRad));
 % zeroline = (0.2222 - R0) / 0.7778 * sqrt(2 * pi) / sigmaRad;
 S = normcdf(pi / sigmaRad) - normcdf(-pi / sigmaRad);
-zeroline = (0.2222 * sqrt(2 * pi) / sigmaRad - S) / 0.7778;
+zeroline = (0.2222 * sqrt(2 * pi) - sigmaRad * S) / ...
+		   (sqrt(2 * pi) - sigmaRad * S);
+
 steps = 360 / stepDeg + 1;
 resp = zeros(steps, 1);
 xTickLabels = cell(1, steps);
@@ -63,8 +64,7 @@ for s = 1:steps
   dirDeg = -180 + (s - 1) * stepDeg;
   dirRad = deg2rad(dirDeg);
 
-  resp(s) = ((1 / sigmaRad / sqrt(2 * pi)) * exp(dirRad^2 / (-2 * sigmaRad^2)) + ...
-					zeroline / (2 * pi)) / (1 / sigmaRad / sqrt(2 * pi) + zeroline / (2 * pi));
+  resp(s) = (1 - zeroline) * exp(dirRad^2 / (-2 * sigmaRad^2)) + zeroline;
   if mod(s, 2) ~= 0 
     xTickLabels{s} = '';
   else

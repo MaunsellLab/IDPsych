@@ -31,7 +31,7 @@ function plotOneResp(plotIndex, sigmaDeg)
   r0 = (sigmaRad / sqrt(8 * pi)) * (erf(pi / (sqrt(2) * sigmaRad)) - erf(-pi / (sqrt(2) * sigmaRad)));
   coh = (0:0.01:1);
   % response to 100% motion coherent null direction
-  rN100 = exp(-pi^2 / (2 * sigmaRad^2));
+  rN100 = exp(-(pi^2 / (2 * sigmaRad^2)));
   % responses to preferred and null motion as a function of coherence.
   rPref = coh + (1 - coh) * r0;
   rNull = r0 - coh * (r0 - rN100);
@@ -108,7 +108,7 @@ function plotSigmaFunction()
   r0 = (sigmaRad / sqrt(8 * pi)) .* (erf(pi ./ (sqrt(2) * sigmaRad)) - erf(-pi ./ (sqrt(2) * sigmaRad)));
   % get the response to 100% null motion (100% preferred motion is taken to
   % be 1.0)
-  rN100 = exp(-pi.^2 ./ (2 * sigmaRad.^2));
+  rN100 = exp(-(pi.^2 ./ (2 * sigmaRad.^2)));
   % The ratio takes into account that rN100 is never truly zero.
   ratio = (1 - r0) ./ (r0 - rN100);
   ax = subplot(2, 1, 2);

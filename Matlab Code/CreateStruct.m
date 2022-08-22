@@ -3,7 +3,7 @@
 % Jul/25/2022
 
 convertIDP();
-cd D:\Research\IDPsych_Project\IDPsych
+cd D:\Research\IDPsych_Project\IDPsych\Subjects\
 fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
@@ -152,6 +152,12 @@ IncThreholdsMean = mean(IncThresholds);
 IncThresholdsSEM = std(IncThresholds) / sqrt(length(IncThresholds));
 DecThresholdsMean = mean(DecThresholds);
 DecThresholdsSEM = std(DecThresholds) / sqrt(length(DecThresholds));
+
+% Calculate variances
+fprintf('Inc Mean = %.2f%%\n', IncThreholdsMean);
+fprintf('Dec Mean = %.2f%%\n', DecThresholdsMean);
+fprintf('Total Std = %.2f%%\n', std(allThresholds));
+
 
 
 figure(1);

@@ -187,7 +187,14 @@ ylabel('Average Threshold');
 legend(["Mean", cellstr(categorical(sjID))]);
 title('IDPsych');
 
-% Scatter plot against the diagonal line
+% Get the mean and variance for each subject, and create a scatter plot 
+% against the diagonal line
+
+SumTable = table(sjID', zeros(length(sjID), 2), zeros(length(sjID), 1), ...
+                 zeros(length(sjID), 2), zeros(length(sjID), 1), zeros(length(sjID), 1));
+SumTable.Properties.VariableNames = ["Subject No.", "Inc Mean and Std (%)", "Inc N", ... 
+                      "Dec Mean and Std (%)", "Dec N", "p-value"];
+
 figure(2);
 clf;
 for sj = 1:length(sjID)
@@ -199,7 +206,9 @@ for sj = 1:length(sjID)
     currIncSEM = std(allThresholds(currsjInc)) / sqrt(length(currsjInc));
     currDecMean = mean(allThresholds(currsjDec));
     currDecSEM = std(allThresholds(currsjDec)) / sqrt(length(currsjDec));
-    
+    [~, pOnetail] = ttest2(allThresholds(currsjInc), allThresholds(currsjDec), "Tail", "left");
+    SumTable(sj,:) = {sjID(sj), [currIncMean, std(allThresholds(currsjInc))], length(currsjInc), ...
+                      [currDecMean, std(allThresholds(currsjDec))], length(currsjDec), pOnetail};
     
     scatter(currIncMean, currDecMean, 100, 'filled');
 
@@ -217,7 +226,9 @@ plot([0 50], [0 50], ':k');
 axis([0 50 0 50]);
 legend(cellstr(categorical(sjID)));
 xlabel('Increment Thresholds (%)');
-ylabel('Decrement Thresholds (%)' );
+ylabel('Decrement Thresholds (%)');
+
+disp(SumTable);
 
 
 

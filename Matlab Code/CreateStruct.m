@@ -3,16 +3,17 @@
 % Jul/25/2022
 
 convertIDP();
-cd D:\Research\IDPsych_Project\IDPsych\Subjects\
+cd D:\Research\IDPsych_Project\IDPsych\
 fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
-startDate = datetime(2022, 7, 21);
-endDate = datetime(2022, 8, 4);
+startDate = datetime(2022, 9, 28);
+endDate = datetime(2022, 9, 30);
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
+fileList(~contains({fileList(:).name}, '20')) = [];
 
 % Get the indices of the files to be removed
 toRemove = [];

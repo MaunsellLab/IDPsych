@@ -9,7 +9,7 @@ fileList = dir('**\*.mat');
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
 startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 10, 4);
+endDate = datetime(2022, 10, 5);
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
@@ -294,7 +294,7 @@ sgtitle('Averaged Inc/Dec Staircases');
 % Histograms for each subject
 figure(4)
 for sj = 1:nSubjects
-    subplot(3,1,sj);
+    subplot(nSubjects,1,sj);
 %     btstrap = zeros(1000,2);
 %     currsjInc = allThresholds(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
 %         ([IDPsychTrials(:).taskMode] == 1) == 1);

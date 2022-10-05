@@ -9,7 +9,7 @@ fileList = dir('**\*.mat');
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
 startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 10, 2);
+endDate = datetime(2022, 10, 4);
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];

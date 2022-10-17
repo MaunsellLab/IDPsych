@@ -1,6 +1,6 @@
-% Create a master structure
+% Create a master structure and make primary plots
 % Lai Wei
-% Jul/25/2022
+% Jul/25/2022 
 
 convertIDP();
 cd D:\Research\IDPsych_Project\IDPsych\
@@ -9,11 +9,17 @@ fileList = dir('**\*.mat');
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
 startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 10, 5);
+endDate = datetime(2022, 10, 17);
 
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
 fileList(~contains({fileList(:).name}, '20')) = [];
+
+% Remove subjects not qualified
+removedSubjects = ["202"];
+for sj = 1:length(removedSubjects)
+    fileList(contains({fileList(:).folder}, removedSubjects(sj))) = [];
+end
 
 % Get the indices of the files to be removed
 toRemove = [];
@@ -31,16 +37,10 @@ for fi = 1:length(fileList)
 end
 fileList(toRemove) = [];
 
+
 nFiles = length(fileList);
 IDPsychTrials = struct;
 allStaircase = zeros(nFiles, 100);
-
-% % subFolders = unique({fileList(:).folder});
-% % for fd = 1:length(subFolders)
-% %     addpath(subFolders{fd});
-% % end
-
-
 % Create the master structure for all data from all subjects
 for fi = 1:nFiles
     if ~strcmp(pwd, fileList(fi).folder)
@@ -52,26 +52,22 @@ for fi = 1:nFiles
                                              digitsPattern + textBoundary));
     load(fileList(fi).name);
     IDPsychTrials(fi).nTrials = length(trials);
-
     % taskMode: task for current session
     % 0 for Dec and 1 for Inc
     IDPsychTrials(fi).taskMode = trials(1).trial.taskMode;
 
     % stairType: 0 for joint staircase
     IDPsychTrials(fi).stairType = trials(1).trial.stairType;
-
     IDPsychTrials(fi).frameRateHz = file.frameRateHz.data;
-    
     IDPsychTrials(fi).baseCohPC = trials(1).trial.baseCohPC;
-    % behavioral settings
-    
+
+    % behavioral settings 
     IDPsychTrials(fi).behavSettings.baseDurMS = trials(1).trial.baseDurMS;
     IDPsychTrials(fi).behavSettings.stepDurMS = trials(1).trial.stepDurMS;
     IDPsychTrials(fi).behavSettings.revBeforeChange = 6;
     IDPsychTrials(fi).behavSettings.maxStepPC = trials(1).trial.threshStepsPC;
     IDPsychTrials(fi).behavSettings.minStepPC = trials(end).trial.threshStepsPC;
     IDPsychTrials(fi).behavSettings.stepChangeFactor = .5;
-
 
     % dot settings
     IDPsychTrials(fi).dotSettings.azimuthDeg = trials(1).randomDots.azimuthDeg;
@@ -83,36 +79,32 @@ for fi = 1:nFiles
     IDPsychTrials(fi).dotSettings.diameterDeg = trials(1).randomDots.dotDiameterDeg;
     IDPsychTrials(fi).dotSettings.speedDPS = trials(1).randomDots.speedDPS;
     IDPsychTrials(fi).dotSettings.lifeFrames = trials(1).randomDots.lifeFrames;
-
     for tr = 1:length(trials)
         % trialCertify: only trials coded as "0" should be collected
         IDPsychTrials(fi).trials(tr).trialCertify = trials(tr).trialCertify;
 
-        % eodCode: 0 for hit, 1 for miss, 3 for
+        % eodCode: 0 for hit, 1 for miss
         IDPsychTrials(fi).trials(tr).eotCode = trials(tr).eotCode;
 
         % stepDir: task for current trial (should be the same through out
         % the session if it is not bidirectional)
         % 0 for Dec and 1 for Inc
+
         IDPsychTrials(fi).trials(tr).stepDir = trials(tr).trial.stepDir;
 
         % changeLoc: specifies on which side the change happens
         % 0 for Left and 1 for Right
         IDPsychTrials(fi).trials(tr).changeLoc = trials(tr).trial.changeLoc;
-
-
         IDPsychTrials(fi).trials(tr).stepSize = trials(tr).trial.threshStepsPC;
         IDPsychTrials(fi).trials(tr).trialCohPC = trials(tr).trial.stepCohPC;
-    end
-    
+    end    
     testCertify = ([IDPsychTrials(fi).trials(:).trialCertify] == 0) .* ...
                   (([IDPsychTrials(fi).trials(:).eotCode] == 0) + ([IDPsychTrials(fi).trials(:).eotCode] == 1));
     % test if a trial is certified: trialCertify should be 0, and the
     % eodCode should be either 0 or 1
     allStaircase(fi,:) = [IDPsychTrials(fi).trials(testCertify == 1).trialCohPC];
-
     IDPsychTrials(fi).thresholdPC = abs(trials(end).trial.stepCohPC - trials(1).trial.baseCohPC);
-
+    IDPsychTrials(fi).totalHitPC = length(find([IDPsychTrials(fi).trials(testCertify == 1).eotCode] == 0));
     % add bias
     trialStruct = [trials(:).trial];
     IDPsychTrials(fi).rightChangesPC = sum([trialStruct(:).changeLoc]) ./ length([trialStruct(:).changeLoc]) * 100;
@@ -120,32 +112,25 @@ for fi = 1:nFiles
                                         sum([trialStruct(:).changeLoc] == 0 & [trials(:).eotCode] == 1)) / ...
                                         length([trialStruct(:).changeLoc]) * 100;
     IDPsychTrials(fi).rightBiasPC = IDPsychTrials(fi).rightResponsePC - IDPsychTrials(fi).rightChangesPC;
-    
-
-    
-    
-
 end
-
 
 % Add the day of experiment for testing learning effects
 sjID = unique([IDPsychTrials(:).subjectNo]);
+
 nSubjects = length(sjID);
 for sj = 1:nSubjects
     expDays = string(unique([fileList([IDPsychTrials(:).subjectNo] == sjID(sj)).date]));
     for fi = find([IDPsychTrials(:).subjectNo] == sjID(sj))    
         IDPsychTrials(fi).dayOfExp = find(fileList(fi).date == expDays);
     end
-
 end
-
 
 cd D:\Research\IDPsych_Project\IDPsych\'Matlab Code'
 %% Make some plots
-
-% Bar plot with grouped scatter plots
 rng(1);
 
+
+% Bar plot with grouped scatter plots
 allThresholds = [IDPsychTrials(:).thresholdPC]';
 IncThresholds = [IDPsychTrials([IDPsychTrials(:).taskMode] == 1).thresholdPC]';
 DecThresholds = [IDPsychTrials([IDPsychTrials(:).taskMode] == 0).thresholdPC]' ;
@@ -153,13 +138,6 @@ IncThreholdsMean = mean(IncThresholds);
 IncThresholdsSEM = std(IncThresholds) / sqrt(length(IncThresholds));
 DecThresholdsMean = mean(DecThresholds);
 DecThresholdsSEM = std(DecThresholds) / sqrt(length(DecThresholds));
-
-% Calculate variances
-fprintf('Inc Mean = %.2f%%\n', IncThreholdsMean);
-fprintf('Dec Mean = %.2f%%\n', DecThresholdsMean);
-fprintf('Total Std = %.2f%%\n', std(allThresholds));
-
-
 
 figure(1);
 clf;
@@ -180,22 +158,24 @@ er = errorbar(1:2, [IncThreholdsMean, DecThresholdsMean], ...
               [IncThresholdsSEM, DecThresholdsSEM], ...
               'LineStyle','none','Color','k');
 er.Annotation.LegendInformation.IconDisplayStyle = 'off';
-
-
 ylim([0 50]);
 xticklabels({'Inc','Dec'});
 ylabel('Average Threshold');
 legend(["Mean", cellstr(categorical(sjID))]);
 title('IDPsych');
 
+% Calculate variances
+fprintf('Inc Mean = %.2f%%\n', IncThreholdsMean);
+fprintf('Dec Mean = %.2f%%\n', DecThresholdsMean);
+fprintf('Total Std = %.2f%%\n', std(allThresholds));
+
 % Get the mean and variance for each subject, and create a scatter plot 
 % against the diagonal line
 
 SumTable = table(sjID', zeros(length(sjID), 2), zeros(length(sjID), 1), ...
                  zeros(length(sjID), 2), zeros(length(sjID), 1), zeros(length(sjID), 1));
-SumTable.Properties.VariableNames = ["Subject No.", "Inc Mean and Std (%)", "Inc N", ... 
-                      "Dec Mean and Std (%)", "Dec N", "p-value"];
-
+SumTable.Properties.VariableNames = ["Subject No.", "Inc Mean and SEM (%)", "Inc N", ... 
+                      "Dec Mean and SEM (%)", "Dec N", "p-value"];
 figure(2);
 clf;
 for sj = 1:length(sjID)
@@ -208,20 +188,16 @@ for sj = 1:length(sjID)
     currDecMean = mean(allThresholds(currsjDec));
     currDecSEM = std(allThresholds(currsjDec)) / sqrt(length(currsjDec));
     [~, pOnetail] = ttest2(allThresholds(currsjInc), allThresholds(currsjDec), "Tail", "left");
-    SumTable(sj,:) = {sjID(sj), [currIncMean, std(allThresholds(currsjInc))], length(currsjInc), ...
-                      [currDecMean, std(allThresholds(currsjDec))], length(currsjDec), pOnetail};
-    
+    SumTable(sj,:) = {sjID(sj), [currIncMean, currIncSEM], length(currsjInc), ...
+                      [currDecMean, currDecSEM], length(currsjDec), pOnetail};   
     scatter(currIncMean, currDecMean, 100, 'filled');
-
     hold on
     % 2*SEM for ~95% confidence interval
     er = errorbar(currIncMean, currDecMean, 2*currDecSEM, 2*currDecSEM, 2*currIncSEM, ...
                   2*currIncSEM);
-    
     er.LineStyle = ':';
     er.Color = 'k';
     er.Annotation.LegendInformation.IconDisplayStyle = 'off';
-    
 end
 plot([0 50], [0 50], ':k');
 axis([0 50 0 50]);
@@ -231,18 +207,32 @@ ylabel('Decrement Thresholds (%)');
 
 disp(SumTable);
 
-
+% Plot the histogram of hit rates
+figure(3);
+clf;
+for sj = 1:nSubjects
+    subplot(nSubjects, 1, sj);
+    histogram([IDPsychTrials(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+             ([IDPsychTrials(:).taskMode] == 1) == 1).totalHitPC], 5); % Inc
+    hold on
+    histogram([IDPsychTrials(([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ...
+             ([IDPsychTrials(:).taskMode] == 0) == 1).totalHitPC], 5); % Dec
+    title(['Subject ', num2str(sjID(sj))]);
+end
+ax = axes(figure(3), "Visible", "off");
+ax.Title.Visible = "on";
+ax.XLabel.Visible = "on";
+ax.YLabel.Visible = "on";
+xlabel(ax, "Thresholds");
+ylabel(ax, "Count");
+sgtitle("Histograms for Hit Rates");
 
 % Plot the average staircases
 % Also calculated mean/std/SEM for each subject
 
-figure(3);
+figure(4);
 clf;
-
 for sj = 1:nSubjects
-
-    
-
     IncStaircase = allStaircase((([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ([IDPsychTrials(:).taskMode] == 1)) == 1, :);
     DecStaircase = allStaircase((([IDPsychTrials(:).subjectNo] == sjID(sj)) .* ([IDPsychTrials(:).taskMode] == 0)) == 1, :);
     IncStaircaseMean = mean(IncStaircase);
@@ -280,9 +270,8 @@ for sj = 1:nSubjects
                  ' ', num2str(DecStaircaseStd(100),2), '%'], ...
                  ['n = ', num2str(size(DecStaircase, 1))]});
     title(['Subject ', num2str(sjID(sj))]);
-
 end
-ax = axes(figure(3), "Visible", "off");
+ax = axes(figure(4), "Visible", "off");
 ax.Title.Visible = "on";
 ax.XLabel.Visible = "on";
 ax.YLabel.Visible = "on";
@@ -292,7 +281,7 @@ sgtitle('Averaged Inc/Dec Staircases');
 
 
 % Histograms for each subject
-figure(4)
+figure(5)
 for sj = 1:nSubjects
     subplot(nSubjects,1,sj);
 %     btstrap = zeros(1000,2);
@@ -312,7 +301,7 @@ for sj = 1:nSubjects
         ([IDPsychTrials(:).taskMode] == 0) == 1)); % Dec
     title(['Subject ', num2str(sjID(sj))]);
 end
-ax = axes(figure(4), "Visible", "off");
+ax = axes(figure(5), "Visible", "off");
 ax.Title.Visible = "on";
 ax.XLabel.Visible = "on";
 ax.YLabel.Visible = "on";
@@ -323,8 +312,7 @@ sgtitle("Histograms for IDP Thresholds");
 
 
 % Psychological learning
-figure(5);
-
+figure(6);
 for sj = 1:nSubjects
     subplot(nSubjects, 1, sj);
     sjAllSessions = find([IDPsychTrials(:).subjectNo] == sjID(sj));
@@ -335,21 +323,24 @@ for sj = 1:nSubjects
     for d = days
         X1 = find([IDPsychTrials(sjIncSessions).dayOfExp] == d);
         scatter(X1, [IDPsychTrials(sjIncSessions(X1)).thresholdPC] + [IDPsychTrials(sjIncSessions(X1)).baseCohPC], ...
-                10, col(50*d, :), 'filled');
+                10, col(50*d-25, :), 'filled');
         hold on
         X2 = find([IDPsychTrials(sjDecSessions).dayOfExp] == d);
         scatter(X2, [IDPsychTrials(sjDecSessions(X2)).baseCohPC] - [IDPsychTrials(sjDecSessions(X2)).thresholdPC], ...
-                10, col(50*d, :), 'filled');
+                10, col(50*d-25, :), 'filled');
         hold on      
     end
     plot([1 max(max(X1), max(X2))], [50 50], ':k');
     ylim([0 100]);
     title(['Subject ', num2str(sjID(sj))]);
 end
-ax = axes(figure(5), "Visible", "off");
+ax = axes(figure(6), "Visible", "off");
 ax.Title.Visible = "on";
 ax.XLabel.Visible = "on";
 ax.YLabel.Visible = "on";
 xlabel(ax, 'Session No.');
 ylabel(ax, 'Threshold (%)');
+
+
+
 

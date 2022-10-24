@@ -7,4 +7,5 @@
 
 \f0\fs24 \cf0 .DS_Store\
 *.asv\
+.DS_Store
 }

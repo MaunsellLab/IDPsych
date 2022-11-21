@@ -9,8 +9,10 @@ fileList = dir('**\*.mat');
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
 startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 10, 17);
+endDate = datetime(2022, 11, 4);
 
+% Use the data from certain groups of subjects
+fileList(contains({fileList(:).folder}, '10')) = [];
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
 fileList(~contains({fileList(:).name}, '20')) = [];
@@ -341,6 +343,51 @@ ax.YLabel.Visible = "on";
 xlabel(ax, 'Session No.');
 ylabel(ax, 'Threshold (%)');
 
+
+% Psychological learning (per day)
+figure(7);
+for sj = 1:length(sjID(1:5))
+    subplot(5, 1, sj);
+    sjAllSessions = find([IDPsychTrials(:).subjectNo] == sjID(sj));
+    sjIncSessions = sjAllSessions([IDPsychTrials(sjAllSessions).taskMode] == 1);
+    sjDecSessions = sjAllSessions([IDPsychTrials(sjAllSessions).taskMode] == 0);
+    days = unique([IDPsychTrials(sjAllSessions).dayOfExp]);
+    nDays = length(days) / 2;
+    sjPsyLearnMean = zeros(2, nDays);
+    sjPsyLearnSEM = zeros(2, nDays);
+    for d = 1:nDays
+        currDayInc = [IDPsychTrials(sjIncSessions([IDPsychTrials(sjIncSessions).dayOfExp] == d*2-1)).thresholdPC];
+        currDayDec = [IDPsychTrials(sjDecSessions([IDPsychTrials(sjDecSessions).dayOfExp] == d*2)).thresholdPC];
+        sjPsyLearnMean(1, d) = mean(currDayInc);
+        sjPsyLearnMean(2, d) = mean(currDayDec);
+        sjPsyLearnSEM(1, d) = std(currDayInc) / sqrt(length(currDayInc));
+        sjPsyLearnSEM(2, d) = std(currDayDec) / sqrt(length(currDayDec));
+    end
+    plot(1:nDays, sjPsyLearnMean(1,:));
+    hold on
+    plot(1:nDays, sjPsyLearnMean(2,:));
+    hold on
+    er1 = errorbar(1:nDays, sjPsyLearnMean(1,:), sjPsyLearnSEM(1,:), sjPsyLearnSEM(1,:));
+    er1.LineStyle = ':';
+    er1.Color = 'k';
+    er1.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    hold on 
+    er2 = errorbar(1:nDays, sjPsyLearnMean(2,:), sjPsyLearnSEM(2,:), sjPsyLearnSEM(2,:));
+    er2.LineStyle = ':';
+    er2.Color = 'k';
+    er2.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    xlim([0,4]);
+    ylim([0 50]);
+    xticks([1:3]);
+    xticklabels([1:3]);
+    title(['Subject ', num2str(sjID(sj))]);
+end
+ax = axes(figure(7), "Visible", "off");
+ax.Title.Visible = "on";
+ax.XLabel.Visible = "on";
+ax.YLabel.Visible = "on";
+xlabel(ax, 'Day No.');
+ylabel(ax, 'Threshold (%)');
 
 
 

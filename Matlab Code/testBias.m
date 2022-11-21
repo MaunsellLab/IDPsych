@@ -65,7 +65,7 @@ function threshold = doOneStaircase(alpha, type)
   numRev = 0;
   limitTrials = 100;                % minimum number of trials to collect
   limitStep = 1;                    % step size limit that must be reached
-  while step > limitStep && numTrials < limitTrials
+  while step >= limitStep && numTrials < limitTrials
     stimSide = randi(2);                       % 1 == Left, 2 == Right side change
     % If we are doing split L/R staircases and this isn't our side, just continue
     if (type == testTypes.prefBiased && stimSide == 1) || (type == testTypes.nonprefBiased && stimSide == 2)
@@ -90,7 +90,7 @@ function threshold = doOneStaircase(alpha, type)
     if (correct && seqWrong > 0) || (~correct && seqCorrect > 0)  % a reversal
       numRev = numRev + 1;
       if numRev >= 6            % reduce step size after 6 reversals
-        step = step * 0.5;
+        step = max(limitStep, step * 0.5);
         numRev = 0;
       end
     end

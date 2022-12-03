@@ -8,17 +8,17 @@ fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
-startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 11, 4);
+startDate = datetime(2022, 10, 28);
+endDate = datetime(2022, 12, 2);
 
 % Use the data from certain groups of subjects
-fileList(contains({fileList(:).folder}, '10')) = [];
+fileList(~contains({fileList(:).folder}, '40')) = [];
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
 fileList(~contains({fileList(:).name}, '20')) = [];
 
-% Remove subjects not qualified
-removedSubjects = ["202"];
+% Remove subjects and dates not qualified
+removedSubjects = ["401", "407"];
 for sj = 1:length(removedSubjects)
     fileList(contains({fileList(:).folder}, removedSubjects(sj))) = [];
 end
@@ -75,7 +75,6 @@ for fi = 1:nFiles
     IDPsychTrials(fi).dotSettings.azimuthDeg = trials(1).randomDots.azimuthDeg;
     IDPsychTrials(fi).dotSettings.elevationDeg = trials(1).randomDots.elevationDeg;
     IDPsychTrials(fi).dotSettings.radiusDeg = trials(1).randomDots.radiusDeg;
-    IDPsychTrials(fi).dotSettings.azimuthDeg = trials(1).randomDots.azimuthDeg;
     IDPsychTrials(fi).dotSettings.densityDPD = trials(1).randomDots.density;
     IDPsychTrials(fi).dotSettings.directionDeg = trials(1).randomDots.directionDeg;
     IDPsychTrials(fi).dotSettings.diameterDeg = trials(1).randomDots.dotDiameterDeg;
@@ -103,15 +102,15 @@ for fi = 1:nFiles
     testCertify = ([IDPsychTrials(fi).trials(:).trialCertify] == 0) .* ...
                   (([IDPsychTrials(fi).trials(:).eotCode] == 0) + ([IDPsychTrials(fi).trials(:).eotCode] == 1));
     % test if a trial is certified: trialCertify should be 0, and the
-    % eodCode should be either 0 or 1
+    % eotCode should be either 0 or 1
     allStaircase(fi,:) = [IDPsychTrials(fi).trials(testCertify == 1).trialCohPC];
     IDPsychTrials(fi).thresholdPC = abs(trials(end).trial.stepCohPC - trials(1).trial.baseCohPC);
     IDPsychTrials(fi).totalHitPC = length(find([IDPsychTrials(fi).trials(testCertify == 1).eotCode] == 0));
     % add bias
-    trialStruct = [trials(:).trial];
+    trialStruct = [trials(testCertify == 1).trial];
     IDPsychTrials(fi).rightChangesPC = sum([trialStruct(:).changeLoc]) ./ length([trialStruct(:).changeLoc]) * 100;
-    IDPsychTrials(fi).rightResponsePC = (sum([trialStruct(:).changeLoc] == 1 & [trials(:).eotCode] == 0) + ...
-                                        sum([trialStruct(:).changeLoc] == 0 & [trials(:).eotCode] == 1)) / ...
+    IDPsychTrials(fi).rightResponsePC = (sum([trialStruct(:).changeLoc] == 1 & [trials(testCertify == 1).eotCode] == 0) + ...
+                                        sum([trialStruct(:).changeLoc] == 0 & [trials(testCertify == 1).eotCode] == 1)) / ...
                                         length([trialStruct(:).changeLoc]) * 100;
     IDPsychTrials(fi).rightBiasPC = IDPsychTrials(fi).rightResponsePC - IDPsychTrials(fi).rightChangesPC;
 end
@@ -356,8 +355,8 @@ for sj = 1:length(sjID(1:5))
     sjPsyLearnMean = zeros(2, nDays);
     sjPsyLearnSEM = zeros(2, nDays);
     for d = 1:nDays
-        currDayInc = [IDPsychTrials(sjIncSessions([IDPsychTrials(sjIncSessions).dayOfExp] == d*2-1)).thresholdPC];
-        currDayDec = [IDPsychTrials(sjDecSessions([IDPsychTrials(sjDecSessions).dayOfExp] == d*2)).thresholdPC];
+        currDayInc = [IDPsychTrials(sjIncSessions((5*d-4):(5*d))).thresholdPC];
+        currDayDec = [IDPsychTrials(sjDecSessions((5*d-4):(5*d))).thresholdPC];
         sjPsyLearnMean(1, d) = mean(currDayInc);
         sjPsyLearnMean(2, d) = mean(currDayDec);
         sjPsyLearnSEM(1, d) = std(currDayInc) / sqrt(length(currDayInc));

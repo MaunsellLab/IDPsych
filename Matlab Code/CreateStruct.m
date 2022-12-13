@@ -8,15 +8,17 @@ fileList = dir('**\*.mat');
 
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
-startDate = datetime(2022, 9, 28);
-endDate = datetime(2022, 10, 17);
+startDate = datetime(2022, 10, 28);
+endDate = datetime(2022, 12, 2);
 
+% Use the data from certain groups of subjects
+fileList(~contains({fileList(:).folder}, '40')) = [];
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
 fileList(~contains({fileList(:).name}, '20')) = [];
 
-% Remove subjects not qualified
-removedSubjects = ["202"];
+% Remove subjects and dates not qualified
+removedSubjects = ["401", "407"];
 for sj = 1:length(removedSubjects)
     fileList(contains({fileList(:).folder}, removedSubjects(sj))) = [];
 end
@@ -73,7 +75,6 @@ for fi = 1:nFiles
     IDPsychTrials(fi).dotSettings.azimuthDeg = trials(1).randomDots.azimuthDeg;
     IDPsychTrials(fi).dotSettings.elevationDeg = trials(1).randomDots.elevationDeg;
     IDPsychTrials(fi).dotSettings.radiusDeg = trials(1).randomDots.radiusDeg;
-    IDPsychTrials(fi).dotSettings.azimuthDeg = trials(1).randomDots.azimuthDeg;
     IDPsychTrials(fi).dotSettings.densityDPD = trials(1).randomDots.density;
     IDPsychTrials(fi).dotSettings.directionDeg = trials(1).randomDots.directionDeg;
     IDPsychTrials(fi).dotSettings.diameterDeg = trials(1).randomDots.dotDiameterDeg;
@@ -101,15 +102,15 @@ for fi = 1:nFiles
     testCertify = ([IDPsychTrials(fi).trials(:).trialCertify] == 0) .* ...
                   (([IDPsychTrials(fi).trials(:).eotCode] == 0) + ([IDPsychTrials(fi).trials(:).eotCode] == 1));
     % test if a trial is certified: trialCertify should be 0, and the
-    % eodCode should be either 0 or 1
+    % eotCode should be either 0 or 1
     allStaircase(fi,:) = [IDPsychTrials(fi).trials(testCertify == 1).trialCohPC];
     IDPsychTrials(fi).thresholdPC = abs(trials(end).trial.stepCohPC - trials(1).trial.baseCohPC);
     IDPsychTrials(fi).totalHitPC = length(find([IDPsychTrials(fi).trials(testCertify == 1).eotCode] == 0));
     % add bias
-    trialStruct = [trials(:).trial];
+    trialStruct = [trials(testCertify == 1).trial];
     IDPsychTrials(fi).rightChangesPC = sum([trialStruct(:).changeLoc]) ./ length([trialStruct(:).changeLoc]) * 100;
-    IDPsychTrials(fi).rightResponsePC = (sum([trialStruct(:).changeLoc] == 1 & [trials(:).eotCode] == 0) + ...
-                                        sum([trialStruct(:).changeLoc] == 0 & [trials(:).eotCode] == 1)) / ...
+    IDPsychTrials(fi).rightResponsePC = (sum([trialStruct(:).changeLoc] == 1 & [trials(testCertify == 1).eotCode] == 0) + ...
+                                        sum([trialStruct(:).changeLoc] == 0 & [trials(testCertify == 1).eotCode] == 1)) / ...
                                         length([trialStruct(:).changeLoc]) * 100;
     IDPsychTrials(fi).rightBiasPC = IDPsychTrials(fi).rightResponsePC - IDPsychTrials(fi).rightChangesPC;
 end
@@ -341,6 +342,51 @@ ax.YLabel.Visible = "on";
 xlabel(ax, 'Session No.');
 ylabel(ax, 'Threshold (%)');
 
+
+% Psychological learning (per day)
+figure(7);
+for sj = 1:length(sjID(1:5))
+    subplot(5, 1, sj);
+    sjAllSessions = find([IDPsychTrials(:).subjectNo] == sjID(sj));
+    sjIncSessions = sjAllSessions([IDPsychTrials(sjAllSessions).taskMode] == 1);
+    sjDecSessions = sjAllSessions([IDPsychTrials(sjAllSessions).taskMode] == 0);
+    days = unique([IDPsychTrials(sjAllSessions).dayOfExp]);
+    nDays = length(days) / 2;
+    sjPsyLearnMean = zeros(2, nDays);
+    sjPsyLearnSEM = zeros(2, nDays);
+    for d = 1:nDays
+        currDayInc = [IDPsychTrials(sjIncSessions((5*d-4):(5*d))).thresholdPC];
+        currDayDec = [IDPsychTrials(sjDecSessions((5*d-4):(5*d))).thresholdPC];
+        sjPsyLearnMean(1, d) = mean(currDayInc);
+        sjPsyLearnMean(2, d) = mean(currDayDec);
+        sjPsyLearnSEM(1, d) = std(currDayInc) / sqrt(length(currDayInc));
+        sjPsyLearnSEM(2, d) = std(currDayDec) / sqrt(length(currDayDec));
+    end
+    plot(1:nDays, sjPsyLearnMean(1,:));
+    hold on
+    plot(1:nDays, sjPsyLearnMean(2,:));
+    hold on
+    er1 = errorbar(1:nDays, sjPsyLearnMean(1,:), sjPsyLearnSEM(1,:), sjPsyLearnSEM(1,:));
+    er1.LineStyle = ':';
+    er1.Color = 'k';
+    er1.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    hold on 
+    er2 = errorbar(1:nDays, sjPsyLearnMean(2,:), sjPsyLearnSEM(2,:), sjPsyLearnSEM(2,:));
+    er2.LineStyle = ':';
+    er2.Color = 'k';
+    er2.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    xlim([0,4]);
+    ylim([0 50]);
+    xticks([1:3]);
+    xticklabels([1:3]);
+    title(['Subject ', num2str(sjID(sj))]);
+end
+ax = axes(figure(7), "Visible", "off");
+ax.Title.Visible = "on";
+ax.XLabel.Visible = "on";
+ax.YLabel.Visible = "on";
+xlabel(ax, 'Day No.');
+ylabel(ax, 'Threshold (%)');
 
 
 

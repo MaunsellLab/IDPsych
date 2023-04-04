@@ -1,4 +1,4 @@
-function plotZeroResp()
+dfunction plotZeroResp()
 % Plot the effect of tuning width on the response to zero coherence
 
   figure(1);

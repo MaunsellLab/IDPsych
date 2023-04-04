@@ -2,23 +2,25 @@
 % Lai Wei
 % Jul/25/2022 
 
-convertIDP();
-cd D:\Research\IDPsych_Project\IDPsych\
-fileList = dir('**\*.mat');
+% convertIDP();
+% cd G:\'Other computers'\Lab\'Maunsell Lab'\Thesis\IDPsych
+% fileList = dir('**\*.mat');
+cd '/Users/laiwei/Desktop/Maunsell Lab/Thesis/IDPsych/'
+fileList = dir('**/*.mat');
 
 % Pull out data from a range of dates
 % Date put in as a three-element datetime: (YYYY, (M)M, (D)D)
-startDate = datetime(2022, 10, 28);
-endDate = datetime(2022, 12, 2);
+startDate = datetime(2022, 9, 28);
+endDate = datetime(2022, 12, 8);
 
 % Use the data from certain groups of subjects
-fileList(~contains({fileList(:).folder}, '40')) = [];
+fileList(~contains({fileList(:).folder}, '20')) = [];
 % Use the data files only
 fileList(contains({fileList(:).name}, 'Info')) = [];
 fileList(~contains({fileList(:).name}, '20')) = [];
 
 % Remove subjects and dates not qualified
-removedSubjects = ["401", "407"];
+removedSubjects = ["202", "401", "407"];
 for sj = 1:length(removedSubjects)
     fileList(contains({fileList(:).folder}, removedSubjects(sj))) = [];
 end
@@ -126,7 +128,8 @@ for sj = 1:nSubjects
     end
 end
 
-cd D:\Research\IDPsych_Project\IDPsych\'Matlab Code'
+% cd G:\'Other computers'\Lab\'Maunsell Lab'\Thesis\IDPsych\'Matlab Code'
+cd '/Users/laiwei/Desktop/Maunsell Lab/Thesis/IDPsych/Matlab Code'
 %% Make some plots
 rng(1);
 
